@@ -2,7 +2,7 @@
 
 A Python application that generates and validates data contracts from Cosmos DB metadata and Databricks Unity Catalog schema.
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **Install Dependencies**
    ```bash
@@ -27,7 +27,7 @@ A Python application that generates and validates data contracts from Cosmos DB 
    python main.py
    ```
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ├── config.py           # Configuration management
@@ -37,7 +37,7 @@ A Python application that generates and validates data contracts from Cosmos DB 
 └── DataContracts/     # Generated contracts
 ```
 
-## 🎯 Usage
+## Usage
 
 The application will prompt you for:
 1. **Identifier**: Table name (`catalog.schema.table`) or document ID
@@ -48,15 +48,15 @@ Example:
 Enter table full name or document ID: dfp_minerva_prd.towerdatahub.catalogue_towers_3x
 Enter output directory (default: DataContracts): 
 
-✅ Contract generated: Catalogue_Towers_3X v1.0.0
-📊 Health Score: 100% | Status: HEALTHY
+ Contract generated: Catalogue_Towers_3X v1.0.0
+ Health Score: 100% | Status: HEALTHY
 
-🎉 Contract generated and validated successfully!
-📄 Contract: DataContracts\Catalogue_Towers_3X_v1.0.0.yaml
-📊 Health Report: DataContracts\Catalogue_Towers_3X_v1.0.0_report.json
+ Contract generated and validated successfully!
+ Contract: DataContracts\Catalogue_Towers_3X_v1.0.0.yaml
+ Health Report: DataContracts\Catalogue_Towers_3X_v1.0.0_report.json
 ```
 
-## 📋 What It Does
+##  What It Does
 
 1. **Fetches metadata** from Cosmos DB
 2. **Extracts schema** from Databricks Unity Catalog
@@ -66,21 +66,21 @@ Enter output directory (default: DataContracts):
 
 ## ⚙️ Features
 
-- ✅ Clean Architecture with 4 focused files
-- ✅ Automatic version management
-- ✅ Health scoring (0-100%)
-- ✅ Real data examples
-- ✅ Error handling and logging
-- ✅ Professional YAML output
+-  Clean Architecture with 4 focused files
+-  Automatic version management
+-  Health scoring (0-100%)
+-  Real data examples
+-  Error handling and logging
+-  Professional YAML output
 
-## 🔧 Requirements
+##  Requirements
 
 - Python 3.8+
 - Access to Azure Cosmos DB
 - Access to Databricks Unity Catalog
 - Dependencies in `requirements.txt`
 
-## 📊 Output Files
+##  Output Files
 
 - **Contract YAML**: Complete data contract specification
 - **Health Report JSON**: Validation results and quality metrics
