@@ -1,0 +1,11 @@
+# Core dependencies for Data Contract Generator
+azure-cosmos>=4.9.0
+databricks-sql-connector>=2.9.0
+datacontract-cli>=0.10.0
+python-dotenv>=1.0.0
+PyYAML>=6.0.1
+packaging>=23.0
+
+# Additional utilities
+pathlib>=1.0.1
+typing-extensions>=4.0.0

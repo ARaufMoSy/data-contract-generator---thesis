@@ -1,0 +1,182 @@
+@startuml DataContractGenerator_Architecture
+
+!theme plain
+skinparam backgroundColor white
+skinparam classBackgroundColor white
+skinparam classBorderColor black
+skinparam stereotypeCBackgroundColor lightgray
+
+title Data Contract Generator - Clean Architecture\nUML Class Diagram
+
+' Define packages for each layer
+package "Configuration Layer" as config_layer {
+    class Config <<dataclass>> {
+        +cosmos_endpoint: str
+        +cosmos_key: str
+        +cosmos_database: str = "metadata"
+        +cosmos_container: str = "table_metadata"
+        +databricks_host: str = ""
+        +databricks_token: str = ""
+        +databricks_http_path: str = ""
+        --
+        +from_env(): Config {static}
+    }
+    
+    class "setup_logging()" as setup_logging <<function>> {
+        +setup_logging(): Logger
+    }
+}
+
+package "Data Access Layer" as data_layer {
+    class MetadataRepository {
+        -config: Config
+        -logger: Logger
+        -client: CosmosClient
+        -container: ContainerProxy
+        --
+        +__init__(config: Config, logger: Logger)
+        +fetch_metadata(identifier: str): Optional[Dict]
+        -_fetch_by_table_name(table_name: str): Optional[Dict]
+        -_fetch_by_document_id(doc_id: str): Optional[Dict]
+    }
+    
+    class SchemaRepository {
+        -config: Config
+        -logger: Logger
+        --
+        +__init__(config: Config, logger: Logger)
+        +extract_unity_catalog_schema(table_name: str): Dict
+        -_extract_columns(cursor, table_name: str): List[Dict]
+        -_fetch_sample_data(cursor, table_name: str, columns: List): List[Dict]
+    }
+}
+
+package "Business Logic Layer" as service_layer {
+    class ContractService {
+        -logger: Logger
+        --
+        +__init__(logger: Logger)
+        +map_to_contract(cosmos_metadata: Dict, unity_data: Dict): Dict
+        -_build_info(metadata: Dict): Dict
+        -_build_servers(storage_info: Dict): Dict
+        -_build_service_levels(metadata: Dict): Dict
+        -_extract_fields(source: Dict, fields: List, mapping: Dict): Dict
+        -_format_timestamp(timestamp: Any): str
+    }
+    
+    class FileService {
+        -logger: Logger
+        --
+        +__init__(logger: Logger)
+        +save_contract(contract: Dict, output_dir: str): Path
+        -_handle_version_management(contract: Dict, output_dir: Path): Dict
+        -_find_latest_version_file(contract: Dict, output_dir: Path): Optional[Path]
+        -_determine_version_increment(old: Dict, new: Dict, version: str): str
+        -_has_breaking_changes(old_models: Dict, new_models: Dict): bool
+        -_has_minor_changes(old_models: Dict, new_models: Dict): bool
+        -_sanitize_filename(filename: str): str
+        -_setup_yaml_formatting(): None
+        -_normalize_text_fields(data: Any): Any
+    }
+    
+    class ValidationService {
+        -logger: Logger
+        --
+        +__init__(logger: Logger)
+        +validate_contract(contract: Dict, filepath: Path): Dict
+        +save_validation_results(results: Dict, filepath: Path): Path
+        -_build_simple_kpi_results(contract: Dict, validation_result, lint_result): Dict
+        -_build_error_kpi_results(contract: Dict, error: str): Dict
+        -_is_validation_passed(validation_result): bool
+        -_is_lint_passed(lint_result): bool
+        -_check_test_status(test_result): bool
+        -_normalize_text_fields(data: Any): Any
+    }
+}
+
+package "Presentation Layer" as presentation_layer {
+    class DataContractGenerator {
+        -logger: Logger
+        -config: Config
+        -metadata_repo: MetadataRepository
+        -schema_repo: SchemaRepository
+        -contract_service: ContractService
+        -file_service: FileService
+        -validation_service: ValidationService
+        --
+        +__init__()
+        +generate_contract(identifier: str, output_dir: str): Path
+        +generate_and_validate_contract(identifier: str, output_dir: str): Tuple[Path, Path]
+        -_determine_table_name(identifier: str, metadata: dict): str
+        -_display_summary(contract: dict, filepath: Path, validation_results: dict): None
+    }
+    
+    class "main()" as main_function <<function>> {
+        +main(): None
+    }
+}
+
+' External dependencies
+package "External Libraries" as external {
+    class CosmosClient <<external>>
+    class "databricks.sql" as databricks_sql <<external>>
+    class DataContract <<external>>
+    class Logger <<external>>
+    class Path <<external>>
+}
+
+' Define relationships
+' Configuration dependencies
+DataContractGenerator --> Config : uses
+MetadataRepository --> Config : uses
+SchemaRepository --> Config : uses
+DataContractGenerator --> setup_logging : uses
+
+' Data access dependencies
+DataContractGenerator --> MetadataRepository : contains
+DataContractGenerator --> SchemaRepository : contains
+MetadataRepository --> CosmosClient : uses
+SchemaRepository --> databricks_sql : uses
+
+' Service dependencies
+DataContractGenerator --> ContractService : contains
+DataContractGenerator --> FileService : contains
+DataContractGenerator --> ValidationService : contains
+ValidationService --> DataContract : uses
+
+' Presentation dependencies
+main_function --> DataContractGenerator : creates
+DataContractGenerator --> Logger : uses
+DataContractGenerator --> Path : returns
+
+' Layer dependencies (showing architectural flow)
+presentation_layer ..> service_layer : depends on
+service_layer ..> data_layer : depends on
+data_layer ..> config_layer : depends on
+
+' Dependency injection relationships
+DataContractGenerator ||--|| MetadataRepository : injects config & logger
+DataContractGenerator ||--|| SchemaRepository : injects config & logger
+DataContractGenerator ||--|| ContractService : injects logger
+DataContractGenerator ||--|| FileService : injects logger
+DataContractGenerator ||--|| ValidationService : injects logger
+
+' Notes explaining architecture patterns
+note top of DataContractGenerator : **Facade Pattern**\nSimplifies complex subsystem\nProvides unified interface
+
+note top of MetadataRepository : **Repository Pattern**\nAbstracts data access\nEncapsulates Cosmos DB complexity
+
+note top of ContractService : **Service Layer Pattern**\nContains business logic\nOrchestrates operations
+
+note bottom of config_layer : **Configuration Layer**\nEnvironment management\nLogging setup
+
+note as architecture_note
+**Clean Architecture Benefits:**
+• Separation of Concerns
+• Dependency Inversion
+• Single Responsibility Principle
+• Easy Testing & Mocking
+• Maintainable & Extensible
+end note
+
+@enduml

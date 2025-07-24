@@ -1,0 +1,231 @@
+@startuml DataContractGenerator_Sequence
+
+!theme plain
+skinparam backgroundColor white
+skinparam sequenceArrowColor black
+skinparam sequenceLifeLineBorderColor black
+skinparam sequenceParticipantBorderColor black
+
+title Data Contract Generator - Sequence Diagram\nComplete Flow: Generate and Validate Contract
+
+actor User
+participant "main()" as Main
+participant "DataContractGenerator" as Generator
+participant "MetadataRepository" as MetadataRepo
+participant "SchemaRepository" as SchemaRepo
+participant "ContractService" as ContractSvc
+participant "FileService" as FileSvc
+participant "ValidationService" as ValidationSvc
+database "Cosmos DB" as CosmosDB
+database "Databricks" as Databricks
+file "YAML File" as YAMLFile
+component "DataContract SDK" as SDK
+
+== Initialization Phase ==
+
+User -> Main: python main.py
+activate Main
+
+Main -> Main: Get user input\n(identifier, output_dir, choice)
+
+Main -> Generator: __init__()
+activate Generator
+
+Generator -> Generator: setup_logging()
+Generator -> Generator: Config.from_env()
+
+Generator -> MetadataRepo: __init__(config, logger)
+activate MetadataRepo
+MetadataRepo -> CosmosDB: Initialize connection
+MetadataRepo --> Generator: Repository ready
+deactivate MetadataRepo
+
+Generator -> SchemaRepo: __init__(config, logger)
+activate SchemaRepo
+SchemaRepo --> Generator: Repository ready
+deactivate SchemaRepo
+
+Generator -> ContractSvc: __init__(logger)
+activate ContractSvc
+ContractSvc --> Generator: Service ready
+deactivate ContractSvc
+
+Generator -> FileSvc: __init__(logger)
+activate FileSvc
+FileSvc --> Generator: Service ready
+deactivate FileSvc
+
+Generator -> ValidationSvc: __init__(logger)
+activate ValidationSvc
+ValidationSvc --> Generator: Service ready
+deactivate ValidationSvc
+
+Generator --> Main: Generator initialized
+
+== Contract Generation Phase ==
+
+Main -> Generator: generate_and_validate_contract(identifier, output_dir)
+
+Generator -> Generator: generate_contract(identifier, output_dir)
+
+note right of Generator: Step 1: Fetch Metadata
+Generator -> MetadataRepo: fetch_metadata(identifier)
+activate MetadataRepo
+
+alt identifier is table name (contains dots)
+    MetadataRepo -> MetadataRepo: _fetch_by_table_name(identifier)
+    MetadataRepo -> CosmosDB: Query by catalog.schema.table
+    CosmosDB --> MetadataRepo: Return metadata
+else identifier is document ID
+    MetadataRepo -> MetadataRepo: _fetch_by_document_id(identifier)
+    MetadataRepo -> CosmosDB: Read document by ID
+    CosmosDB --> MetadataRepo: Return metadata
+end
+
+MetadataRepo --> Generator: metadata: Dict
+deactivate MetadataRepo
+
+note right of Generator: Step 2: Determine Table Name
+Generator -> Generator: _determine_table_name(identifier, metadata)
+
+note right of Generator: Step 3: Extract Unity Catalog Schema
+Generator -> SchemaRepo: extract_unity_catalog_schema(table_name)
+activate SchemaRepo
+
+SchemaRepo -> Databricks: Connect to Unity Catalog
+activate Databricks
+
+SchemaRepo -> SchemaRepo: _extract_columns(cursor, table_name)
+SchemaRepo -> Databricks: DESCRIBE TABLE query
+Databricks --> SchemaRepo: Column information
+
+SchemaRepo -> SchemaRepo: _fetch_sample_data(cursor, table_name, columns)
+SchemaRepo -> Databricks: SELECT * LIMIT 1
+Databricks --> SchemaRepo: Sample data
+
+deactivate Databricks
+
+SchemaRepo --> Generator: unity_data: Dict\n{models, examples}
+deactivate SchemaRepo
+
+note right of Generator: Step 4: Map to Contract Format
+Generator -> ContractSvc: map_to_contract(metadata, unity_data)
+activate ContractSvc
+
+ContractSvc -> ContractSvc: _build_info(metadata)
+ContractSvc -> ContractSvc: _build_servers(storage_info)
+ContractSvc -> ContractSvc: _build_service_levels(metadata)
+ContractSvc -> ContractSvc: _extract_fields(...)
+
+ContractSvc --> Generator: contract: Dict
+deactivate ContractSvc
+
+note right of Generator: Step 5: Save Contract with Version Management
+Generator -> FileSvc: save_contract(contract, output_dir)
+activate FileSvc
+
+FileSvc -> FileSvc: _handle_version_management(contract, output_dir)
+
+FileSvc -> FileSvc: _find_latest_version_file(contract, output_dir)
+FileSvc -> YAMLFile: Check existing files
+YAMLFile --> FileSvc: Latest version info
+
+alt Latest version exists
+    FileSvc -> YAMLFile: Load latest contract
+    YAMLFile --> FileSvc: latest_contract_dict
+    
+    FileSvc -> FileSvc: _determine_version_increment(latest, new, version)
+    FileSvc -> FileSvc: _has_breaking_changes(old_models, new_models)
+    FileSvc -> FileSvc: _has_minor_changes(old_models, new_models)
+    
+    alt Breaking changes detected
+        FileSvc -> FileSvc: Increment major version
+    else Minor changes detected
+        FileSvc -> FileSvc: Increment minor version
+    else No significant changes
+        FileSvc -> FileSvc: Keep same version
+    end
+end
+
+FileSvc -> FileSvc: _normalize_text_fields(contract)
+FileSvc -> YAMLFile: Save contract as YAML\n(filename_v{version}.yaml)
+YAMLFile --> FileSvc: File saved
+
+FileSvc --> Generator: filepath: Path
+deactivate FileSvc
+
+Generator -> Generator: _display_summary(contract, filepath)
+
+Generator --> Generator: contract_filepath: Path
+
+== Validation Phase ==
+
+note right of Generator: Step 6: Load and Validate Contract
+Generator -> YAMLFile: Load contract for validation
+YAMLFile --> Generator: contract_dict: Dict
+
+Generator -> ValidationSvc: validate_contract(contract_dict, filepath)
+activate ValidationSvc
+
+ValidationSvc -> ValidationSvc: _normalize_text_fields(contract_dict)
+
+ValidationSvc -> SDK: DataContract(filepath, schema_location)
+activate SDK
+
+ValidationSvc -> SDK: test() - Run validation tests
+SDK -> Databricks: Connect and validate schema
+SDK --> ValidationSvc: validation_result
+
+ValidationSvc -> SDK: lint() - Run linting
+SDK --> ValidationSvc: lint_result
+
+deactivate SDK
+
+ValidationSvc -> ValidationSvc: _build_simple_kpi_results(contract, validation, lint)
+
+ValidationSvc -> ValidationSvc: _is_validation_passed(validation_result)
+ValidationSvc -> ValidationSvc: _is_lint_passed(lint_result)
+ValidationSvc -> ValidationSvc: Calculate health_score (0-100)
+
+alt health_score >= 75
+    ValidationSvc -> ValidationSvc: status = "HEALTHY"
+else health_score >= 50
+    ValidationSvc -> ValidationSvc: status = "WARNING"
+else health_score < 50
+    ValidationSvc -> ValidationSvc: status = "CRITICAL"
+end
+
+ValidationSvc --> Generator: validation_results: Dict
+deactivate ValidationSvc
+
+note right of Generator: Step 7: Save Validation Results
+Generator -> ValidationSvc: save_validation_results(results, filepath)
+activate ValidationSvc
+
+ValidationSvc -> YAMLFile: Save JSON report\n(filename_report.json)
+YAMLFile --> ValidationSvc: Report saved
+
+ValidationSvc --> Generator: results_filepath: Path
+deactivate ValidationSvc
+
+Generator -> Generator: _display_summary(contract, filepath, validation_results)
+
+Generator --> Main: (contract_filepath, results_filepath)
+
+== Final Output ==
+
+Main -> User: Display final results:\n• Contract generated successfully\n• Health Score: X%\n• Status: HEALTHY/WARNING/CRITICAL\n• File paths
+
+deactivate Generator
+deactivate Main
+
+note over User, SDK
+**Success Flow Complete:**
+✅ Metadata fetched from Cosmos DB
+✅ Schema extracted from Databricks Unity Catalog  
+✅ Contract generated with version management
+✅ Validation completed with health scoring
+✅ Results saved to files
+end note
+
+@enduml

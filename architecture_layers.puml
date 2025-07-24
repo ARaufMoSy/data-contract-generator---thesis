@@ -1,0 +1,83 @@
+@startuml Architecture_Layers
+
+!theme plain
+skinparam backgroundColor white
+skinparam rectangleBackgroundColor lightblue
+skinparam rectangleBorderColor black
+
+title Data Contract Generator\nLayered Architecture Overview
+
+rectangle "**Presentation Layer**\n(main.py)" as presentation {
+    rectangle "DataContractGenerator\n(Facade)" as facade
+    rectangle "CLI Interface\nmain()" as cli
+}
+
+rectangle "**Business Logic Layer**\n(services.py)" as business {
+    rectangle "ContractService\n(Contract Generation)" as contract
+    rectangle "FileService\n(Version Management)" as file
+    rectangle "ValidationService\n(Health Checks)" as validation
+}
+
+rectangle "**Data Access Layer**\n(repositories.py)" as data {
+    rectangle "MetadataRepository\n(Cosmos DB)" as cosmos
+    rectangle "SchemaRepository\n(Databricks)" as databricks
+}
+
+rectangle "**Configuration Layer**\n(config.py)" as config {
+    rectangle "Config\n(Environment)" as env
+    rectangle "setup_logging()\n(Logging)" as logging
+}
+
+rectangle "**External Systems**" as external {
+    database "Cosmos DB\n(Metadata)" as cosmosdb
+    database "Databricks\n(Unity Catalog)" as db
+    file "YAML Files\n(Contracts)" as files
+    component "DataContract SDK\n(Validation)" as sdk
+}
+
+' Vertical dependencies (Clean Architecture flow)
+presentation --> business : "orchestrates"
+business --> data : "uses"
+data --> config : "depends on"
+
+' Horizontal dependencies within layers
+facade --> cli : "contains"
+contract --> file : "collaborates"
+file --> validation : "collaborates"
+cosmos --> databricks : "parallel access"
+
+' External system connections
+cosmos --> cosmosdb : "queries"
+databricks --> db : "extracts schema"
+file --> files : "saves to"
+validation --> sdk : "validates with"
+
+' Dependency injection flow
+config --> data : "injects config"
+data --> business : "injected into services"
+business --> presentation : "injected into facade"
+
+note top of presentation
+**Dependency Flow:**
+• Main creates Generator
+• Generator injects dependencies
+• Clean separation of concerns
+end note
+
+note bottom of external
+**External Integrations:**
+• Cosmos DB for metadata
+• Databricks for schema
+• File system for storage
+• SDK for validation
+end note
+
+note left of business
+**Design Patterns:**
+• Repository Pattern
+• Service Layer Pattern
+• Facade Pattern
+• Dependency Injection
+end note
+
+@enduml

@@ -1,0 +1,197 @@
+@startuml ErrorHandling_Sequence
+
+!theme plain
+skinparam backgroundColor white
+skinparam sequenceArrowColor red
+skinparam sequenceLifeLineBorderColor black
+skinparam sequenceParticipantBorderColor black
+
+title Data Contract Generator - Error Handling Flows\nException and Edge Case Management
+
+actor User
+participant "main()" as Main
+participant "DataContractGenerator" as Generator
+participant "MetadataRepository" as MetadataRepo
+participant "SchemaRepository" as SchemaRepo
+participant "ValidationService" as ValidationSvc
+database "Cosmos DB" as CosmosDB
+database "Databricks" as Databricks
+component "DataContract SDK" as SDK
+
+== Error Scenario 1: Invalid Identifier ==
+
+User -> Main: python main.py
+activate Main
+
+Main -> Main: identifier = "" (empty input)
+
+Main -> User: ❌ Identifier cannot be empty
+Main -> Main: return (exit)
+deactivate Main
+
+== Error Scenario 2: Metadata Not Found ==
+
+User -> Main: python main.py
+activate Main
+
+Main -> Generator: generate_and_validate_contract("invalid_id", "DataContracts")
+activate Generator
+
+Generator -> MetadataRepo: fetch_metadata("invalid_id")
+activate MetadataRepo
+
+MetadataRepo -> CosmosDB: Query for invalid_id
+CosmosDB --> MetadataRepo: No results found
+
+MetadataRepo -> MetadataRepo: return None
+MetadataRepo --> Generator: None
+deactivate MetadataRepo
+
+Generator -> Generator: if not metadata:\n    raise ValueError(f"No metadata found...")
+
+Generator --> Main: ❌ ValueError: No metadata found for identifier: invalid_id
+deactivate Generator
+
+Main -> User: ❌ Error: No metadata found for identifier: invalid_id
+deactivate Main
+
+== Error Scenario 3: Databricks Connection Failure ==
+
+User -> Main: python main.py
+activate Main
+
+Main -> Generator: generate_and_validate_contract("valid_id", "DataContracts")
+activate Generator
+
+Generator -> MetadataRepo: fetch_metadata("valid_id")
+activate MetadataRepo
+MetadataRepo -> CosmosDB: Query successful
+CosmosDB --> MetadataRepo: Return metadata
+MetadataRepo --> Generator: metadata: Dict
+deactivate MetadataRepo
+
+Generator -> SchemaRepo: extract_unity_catalog_schema("table_name")
+activate SchemaRepo
+
+SchemaRepo -> SchemaRepo: Validate Databricks config
+SchemaRepo -> SchemaRepo: if not all([host, token, path]):\n    log warning
+
+alt Databricks config incomplete
+    SchemaRepo -> SchemaRepo: logger.warning("⚠️ Databricks configuration incomplete")
+    SchemaRepo --> Generator: {"models": {}, "examples": []}
+else Databricks connection fails
+    SchemaRepo -> Databricks: Connect attempt
+    Databricks --> SchemaRepo: ❌ Connection Error
+    
+    SchemaRepo -> SchemaRepo: except Exception as e:\n    logger.error(f"❌ Failed to extract schema: {e}")
+    SchemaRepo --> Generator: {"models": {}, "examples": []}
+end
+
+deactivate SchemaRepo
+
+note right of Generator: Contract generation continues\nwith empty schema data
+
+Generator -> Generator: Continue with contract generation\n(graceful degradation)
+
+Generator --> Main: (contract_filepath, results_filepath)
+deactivate Generator
+
+Main -> User: ✅ Contract generated (with warnings about schema)
+deactivate Main
+
+== Error Scenario 4: Validation Failure ==
+
+User -> Main: python main.py
+activate Main
+
+Main -> Generator: generate_and_validate_contract("valid_id", "DataContracts")
+activate Generator
+
+note right of Generator: Contract generation succeeds...
+
+Generator -> ValidationSvc: validate_contract(contract_dict, filepath)
+activate ValidationSvc
+
+ValidationSvc -> SDK: DataContract(filepath, schema_location)
+activate SDK
+
+alt Validation SDK Error
+    SDK --> ValidationSvc: ❌ Exception during validation
+    
+    ValidationSvc -> ValidationSvc: except Exception as e:\n    logger.error(f"❌ Validation failed: {e}")
+    ValidationSvc -> ValidationSvc: return _build_error_kpi_results(contract, str(e))
+    
+    ValidationSvc --> Generator: {\n  "health_score": 0,\n  "status": "ERROR",\n  "error": "Validation error message"\n}
+else Validation Tests Fail
+    SDK -> Databricks: Run validation tests
+    Databricks --> SDK: Some tests failed
+    
+    SDK --> ValidationSvc: validation_result (with failures)
+    
+    ValidationSvc -> ValidationSvc: _is_validation_passed() returns False
+    ValidationSvc -> ValidationSvc: health_score -= 50
+    ValidationSvc -> ValidationSvc: status = "CRITICAL" or "WARNING"
+    
+    ValidationSvc --> Generator: {\n  "health_score": 25,\n  "status": "CRITICAL",\n  "validation_passed": false\n}
+end
+
+deactivate SDK
+deactivate ValidationSvc
+
+Generator -> Generator: _display_summary(..., validation_results)
+
+Generator --> Main: (contract_filepath, results_filepath)
+deactivate Generator
+
+alt Error case
+    Main -> User: ❌ Contract generated but validation failed\n📊 Health Score: 0% | Status: ERROR
+else Warning/Critical case
+    Main -> User: ⚠️ Contract generated with validation issues\n📊 Health Score: 25% | Status: CRITICAL
+end
+
+deactivate Main
+
+== Error Scenario 5: File System Issues ==
+
+User -> Main: python main.py
+activate Main
+
+Main -> Generator: generate_and_validate_contract("valid_id", "/invalid/path")
+activate Generator
+
+note right of Generator: Contract generation and mapping succeed...
+
+Generator -> Generator: file_service.save_contract(contract, "/invalid/path")
+
+alt Directory creation fails
+    Generator -> Generator: directory_path.mkdir(exist_ok=True)
+    Generator --> Generator: ❌ PermissionError: Access denied
+    
+    Generator -> Generator: except Exception as e:\n    logger.error(f"❌ Failed to save contract: {e}")\n    raise
+    
+    Generator --> Main: ❌ PermissionError: Failed to save contract
+else File write fails
+    Generator -> Generator: with open(filepath, 'w') as file:\n    yaml.dump(...)
+    Generator --> Generator: ❌ IOError: Disk full
+    
+    Generator --> Main: ❌ IOError: Failed to write contract file
+end
+
+deactivate Generator
+
+Main -> User: ❌ Error: Failed to save contract to /invalid/path
+deactivate Main
+
+== Recovery and Logging ==
+
+note over User, SDK
+**Error Handling Strategy:**
+• Graceful degradation where possible
+• Comprehensive logging at each step
+• User-friendly error messages
+• Preserve partial results when safe
+• Clean exception propagation
+• Resource cleanup (DB connections)
+end note
+
+@enduml
