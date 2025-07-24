@@ -56,7 +56,7 @@ Enter output directory (default: DataContracts):
  Health Report: DataContracts\Catalogue_Towers_3X_v1.0.0_report.json
 ```
 
-##  What It Does
+## What It Does
 
 1. **Fetches metadata** from Cosmos DB
 2. **Extracts schema** from Databricks Unity Catalog
@@ -64,7 +64,7 @@ Enter output directory (default: DataContracts):
 4. **Validates contract** and creates health report
 5. **Manages versions** automatically using semantic versioning
 
-## ⚙️ Features
+## Features
 
 -  Clean Architecture with 4 focused files
 -  Automatic version management
@@ -73,14 +73,14 @@ Enter output directory (default: DataContracts):
 -  Error handling and logging
 -  Professional YAML output
 
-##  Requirements
+## Requirements
 
 - Python 3.8+
 - Access to Azure Cosmos DB
 - Access to Databricks Unity Catalog
 - Dependencies in `requirements.txt`
 
-##  Output Files
+## Output Files
 
 - **Contract YAML**: Complete data contract specification
 - **Health Report JSON**: Validation results and quality metrics
