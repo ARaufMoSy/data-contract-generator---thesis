@@ -9,7 +9,6 @@ from services import ContractService, FileService, ValidationService
 
 
 class DataContractGenerator:
-    """Main orchestrator that composes all services using dependency injection."""
     
     def __init__(self):
         """Initialize generator with all dependencies."""
@@ -26,11 +25,11 @@ class DataContractGenerator:
         self.file_service = FileService(self.logger)
         self.validation_service = ValidationService(self.logger)
         
-        self.logger.info("✅ Data Contract Generator initialized successfully")
+        self.logger.info(" Data Contract Generator initialized successfully")
     
     def generate_contract(self, identifier: str, output_dir: str = "DataContracts") -> Path:
         """Generate complete contract from identifier with Unity Catalog schema."""
-        self.logger.info(f"🚀 Starting contract generation for: {identifier}")
+        self.logger.info(f" Starting contract generation for: {identifier}")
         
         # Step 1: Fetch metadata from Cosmos DB
         metadata = self.metadata_repo.fetch_metadata(identifier)
@@ -61,7 +60,7 @@ class DataContractGenerator:
     
     def generate_and_validate_contract(self, identifier: str, output_dir: str = "DataContracts") -> Tuple[Path, Path]:
         """Generate contract and validate it with comprehensive health report."""
-        self.logger.info(f"🚀 Starting contract generation and validation for: {identifier}")
+        self.logger.info(f" Starting contract generation and validation for: {identifier}")
         
         # Generate contract
         contract_filepath = self.generate_contract(identifier, output_dir)
@@ -96,23 +95,23 @@ class DataContractGenerator:
         """Display contract generation summary."""
         info = contract.get('info', {})
         
-        print(f"✅ Contract generated: {info.get('title', 'Unknown')} v{info.get('version', 'Unknown')}")
+        print(f" Contract generated: {info.get('title', 'Unknown')} v{info.get('version', 'Unknown')}")
         
         if validation_results:
-            print(f"📊 Health Score: {validation_results['health_score']}% | Status: {validation_results['status']}")
-            print(f"📄 Results saved to: {filepath.parent / f'{filepath.stem}_report.json'}")
+            print(f" Health Score: {validation_results['health_score']}% | Status: {validation_results['status']}")
+            print(f" Results saved to: {filepath.parent / f'{filepath.stem}_report.json'}")
 
 
 def main():
     """Main CLI function with user interaction."""
     try:
-        print("🚀 Data Contract Generator with Clean Architecture")
+        print(" Data Contract Generator with Clean Architecture")
         print("=" * 55)
         
         # Get user input
         identifier = input("Enter table full name (catalog.schema.table) or document ID: ").strip()
         if not identifier:
-            print("❌ Identifier cannot be empty")
+            print(" Identifier cannot be empty")
             return
         
         output_dir = input("Enter output directory (default: DataContracts): ").strip()
@@ -124,14 +123,14 @@ def main():
         
         # Generate contract with validation
         contract_path, results_path = generator.generate_and_validate_contract(identifier, output_dir)
-        print(f"\n🎉 Contract generated and validated successfully!")
-        print(f"📄 Contract: {contract_path}")
-        print(f"📊 Health Report: {results_path}")
+        print(f"\n Contract generated and validated successfully!")
+        print(f" Contract: {contract_path}")
+        print(f" Health Report: {results_path}")
         
     except KeyboardInterrupt:
-        print("\n⚠️ Operation cancelled by user")
+        print("\n Operation cancelled by user")
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\n Error: {e}")
         logging.getLogger(__name__).error(f"Application error: {e}", exc_info=True)
 
 

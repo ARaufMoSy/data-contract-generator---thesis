@@ -764,7 +764,7 @@ class DataContractGenerator:
             # Build simplified KPI results
             results = self._build_simple_kpi_results(normalized_contract, validation_result, lint_result)
             
-            self.logger.info(f"✅ Validation completed - Status: {results['status']}")
+            self.logger.info(f"✅ Validation completed - Health Score: {results['health_score']}")
             
             return results
             
@@ -787,27 +787,29 @@ class DataContractGenerator:
         # Count total fields across all models
         total_fields = sum(len(model.get('fields', {})) for model in models.values())
         
-        # Calculate simple health score (0-100)
+        # Check for missing descriptions
+        has_missing_descriptions = self._has_missing_descriptions(contract_dict)
+        
+        # Calculate comprehensive health score (0-100)
         health_score = 100
         if not validation_passed:
-            health_score -= 50
+            health_score -= 40
         if not lint_passed:
             health_score -= 25
-        
-        # Determine simple status
-        if health_score >= 75:
-            status = "HEALTHY"
-        elif health_score >= 50:
-            status = "WARNING" 
-        else:
-            status = "CRITICAL"
+        if has_missing_descriptions:
+            health_score -= 35  # Deduct 35 points if any descriptions are missing
         
         return {
             "contract_id": contract_dict.get('id', 'unknown'),
             "contract_name": info.get('title', 'unknown'),
             "validation_timestamp": datetime.now().isoformat(),
-            "health_score": max(0, health_score),
-            "status": status,
+            "health_score": max(0, round(health_score, 1)),
+            "health_score_calculation": {
+                "base_score": 100,
+                "validation_deduction": 0 if validation_passed else 40,
+                "lint_deduction": 0 if lint_passed else 25,
+                "description_deduction": 35 if has_missing_descriptions else 0
+            },
             "validation_passed": validation_passed,
             "lint_passed": lint_passed,
             "owner": contact.get('email', contact.get('name', 'unknown')),
@@ -815,6 +817,12 @@ class DataContractGenerator:
             "total_fields": total_fields,
             "has_examples": len(contract_dict.get('examples', [])) > 0
         }
+
+    def _clean_description(self, description: Optional[str]) -> str:
+        """Clean a description, treating None or 'null' as an empty string."""
+        if description is None or description.strip().lower() == 'null':
+            return ''
+        return description
 
     def _build_error_kpi_results(self, contract_dict: Dict[str, Any], error_message: str) -> Dict[str, Any]:
         """Build simplified error results."""
@@ -827,7 +835,12 @@ class DataContractGenerator:
             "contract_name": info.get('title', 'unknown'),
             "validation_timestamp": datetime.now().isoformat(),
             "health_score": 0,
-            "status": "ERROR",
+            "health_score_calculation": {
+                "base_score": 100,
+                "validation_deduction": 40,
+                "lint_deduction": 25,
+                "description_deduction": 35
+            },
             "validation_passed": False,
             "lint_passed": False,
             "owner": contact.get('email', contact.get('name', 'unknown')),
@@ -865,7 +878,12 @@ class DataContractGenerator:
             "contract_name": self._extract_contract_name(info, servers),
             "validation_timestamp": datetime.now().isoformat(),
             "health_score": 0,
-            "status": "ERROR",
+            "health_score_calculation": {
+                "base_score": 100,
+                "validation_deduction": 40,
+                "lint_deduction": 25,
+                "description_deduction": 35
+            },
             "validation_passed": False,
             "lint_passed": False,
             "issues": 1,
@@ -879,6 +897,28 @@ class DataContractGenerator:
         }
 
     
+    def _has_missing_descriptions(self, contract_dict: Dict[str, Any]) -> bool:
+        """Check if any descriptions are missing (None or 'null')."""
+        # Check main contract description
+        info = contract_dict.get('info', {})
+        if not self._clean_description(info.get('description')):
+            return True
+        
+        # Check models and their fields
+        models = contract_dict.get('models', {})
+        for model_name, model_data in models.items():
+            # Check model description
+            if not self._clean_description(model_data.get('description')):
+                return True
+            
+            # Check field descriptions
+            fields = model_data.get('fields', {})
+            for field_name, field_data in fields.items():
+                if not self._clean_description(field_data.get('description')):
+                    return True
+        
+        return False
+
     def _check_test_status(self, test_result) -> bool:
         """Check if a test/lint result passed."""
         if hasattr(test_result, 'result'):

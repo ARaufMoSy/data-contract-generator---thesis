@@ -4,7 +4,7 @@ import yaml
 import json
 import logging
 import unicodedata
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 from datetime import datetime
 from pathlib import Path
 from packaging import version
@@ -373,7 +373,7 @@ class FileService:
 
 
 class ValidationService:
-    """Contract validation operations."""
+    """Contract validation operations with business-focused health scoring."""
     
     def __init__(self, logger: Optional[logging.Logger] = None):
         self.logger = logger or logging.getLogger(__name__)
@@ -403,7 +403,7 @@ class ValidationService:
             # Build simplified KPI results
             results = self._build_simple_kpi_results(normalized_contract, validation_result, lint_result)
             
-            self.logger.info(f"✅ Validation completed - Status: {results['status']}")
+            self.logger.info(f"✅ Validation completed - Health Score: {results['health_score']}")
             
             return results
             
@@ -431,70 +431,149 @@ class ValidationService:
             raise
     
     def _build_simple_kpi_results(self, contract_dict: Dict[str, Any], validation_result, lint_result) -> Dict[str, Any]:
-        """Build simplified KPI-focused validation results."""
+        """Build simplified KPI-focused validation results with integrated health score."""
         
         # Extract basic contract info
         info = contract_dict.get('info', {})
         contact = info.get('contact', {})
         models = contract_dict.get('models', {})
+        examples = contract_dict.get('examples', [])
         
-        # Process validation results - simplified
+        # Process validation results
         validation_passed = self._is_validation_passed(validation_result)
         lint_passed = self._is_lint_passed(lint_result)
         
-        # Count total fields across all models
-        total_fields = sum(len(model.get('fields', {})) for model in models.values())
+        # Calculate field metrics
+        total_fields = 0
+        empty_fields_count = 0
+        empty_descriptions_count = 0
         
-        # Calculate simple health score (0-100)
-        health_score = 100
-        if not validation_passed:
-            health_score -= 50
-        if not lint_passed:
-            health_score -= 25
+        for model in models.values():
+            fields = model.get('fields', {})
+            total_fields += len(fields)
+            
+            # Check example data for empty values
+            if examples:
+                example_record = examples[0].get('record', {}) if examples else {}
+                
+                for field_name, field_data in fields.items():
+                    # Check empty values in data
+                    value = example_record.get(field_name)
+                    if value is None or str(value).strip() == '' or str(value).strip() == '0':
+                        empty_fields_count += 1
+                    
+                    # Check empty descriptions
+                    desc = field_data.get('description', '').strip()
+                    if not desc or desc.lower() == 'null':
+                        empty_descriptions_count += 1
+            else:
+                # If no examples, only check descriptions
+                for field_name, field_data in fields.items():
+                    desc = field_data.get('description', '').strip()
+                    if not desc or desc.lower() == 'null':
+                        empty_descriptions_count += 1
+                        empty_fields_count += 1  # Assume field is problematic if no description
         
-        # Determine simple status
-        if health_score >= 75:
+        # Calculate health score with updated weights
+        health_score, health_breakdown = self._calculate_integrated_health_score(
+            validation_passed=validation_passed,
+            lint_passed=lint_passed,
+            total_fields=total_fields,
+            empty_fields_count=empty_fields_count,
+            empty_descriptions_count=empty_descriptions_count,
+            has_examples=len(examples) > 0
+        )
+        schema_name = contract_dict.get('servers', {}).get('production', {}).get('schema', 'unknown')
+        schema_display = "salesforce" if schema_name == "dfp_cosmos" else schema_name
+        # Determine status based on health score
+        if health_score >= 80:
             status = "HEALTHY"
-        elif health_score >= 50:
-            status = "WARNING" 
+        elif health_score >= 60:
+            status = "WARNING"
         else:
             status = "CRITICAL"
         
         return {
             "contract_id": contract_dict.get('id', 'unknown'),
-            "contract_name": info.get('title', 'unknown'),
-            "validation_timestamp": datetime.now().isoformat(),
-            "health_score": max(0, health_score),
-            "status": status,
-            "validation_passed": validation_passed,
-            "lint_passed": lint_passed,
+            "contract_schema": schema_display,
+            "contract_id": contract_dict.get('id', 'unknown'),
+            "contract_schema": schema_display,
+            "contract_schema": "salesforce" if schema_name == "dfp_cosmos" else schema_name,
             "owner": contact.get('email', contact.get('name', 'unknown')),
+            "validation_timestamp": datetime.now().isoformat(),
+            "health_score": health_score,
+            "status": status,
+            "health_score_calculation": health_breakdown,
+            "validation_passed": validation_passed,
             "total_models": len(models),
             "total_fields": total_fields,
-            "has_examples": len(contract_dict.get('examples', [])) > 0
+            "empty_fields_count": empty_fields_count,
+            "has_examples": len(examples) > 0
         }
+    
+    def _calculate_integrated_health_score(self, validation_passed: bool, lint_passed: bool,
+                                      total_fields: int, empty_fields_count: int,
+                                      empty_descriptions_count: int, has_examples: bool) -> Tuple[int, Dict]:
+        """Calculate integrated health score with additive scoring (components add up to 100%)."""
+        
+        # Initialize scores (each component adds to the total)
+        breakdown = {}
+        
+        # 1. Validation (40% weight) - Full points if passed
+        validation_score = 40 if validation_passed else 0
+        breakdown["validation_score"] = validation_score
+        
+        # 2. Data Completeness (30% weight) - Based on populated fields
+        if total_fields > 0:
+            populated_fields_percent = ((total_fields - empty_fields_count) / total_fields) * 100
+            completeness_score = (populated_fields_percent / 100) * 30
+        else:
+            completeness_score = 0
+        breakdown["completeness_score"] = round(completeness_score, 1)
+        
+        # 3. Lint (15% weight) - Full points if passed
+        lint_score = 15 if lint_passed else 0
+        breakdown["lint_score"] = lint_score
+        
+        # 4. Documentation (15% weight) - Based on documented fields
+        if total_fields > 0:
+            documented_fields_percent = ((total_fields - empty_descriptions_count) / total_fields) * 100
+            documentation_score = (documented_fields_percent / 100) * 15
+        else:
+            documentation_score = 0
+        breakdown["documentation_score"] = round(documentation_score, 1)
+        
+        # Calculate total health score (sum of all components)
+        health_score = round(validation_score + completeness_score + lint_score + documentation_score, 1)
+        
+        return health_score, breakdown
 
     def _build_error_kpi_results(self, contract_dict: Dict[str, Any], error_message: str) -> Dict[str, Any]:
         """Build simplified error results."""
         info = contract_dict.get('info', {})
         contact = info.get('contact', {})
         models = contract_dict.get('models', {})
-        
+        schema_name = contract_dict.get('servers', {}).get('production', {}).get('schema', 'unknown')
+        schema_display = "salesforce" if schema_name == "dfp_cosmos" else schema_name
         return {
             "contract_id": contract_dict.get('id', 'unknown'),
-            "contract_name": info.get('title', 'unknown'),
+            "contract_schema": schema_display,
+            "owner": contact.get('email', contact.get('name', 'unknown')),
             "validation_timestamp": datetime.now().isoformat(),
             "health_score": 0,
-            "status": "ERROR",
+            "health_score_calculation": {
+                "validation_score": 0,
+                "completeness_score": 0,
+                "lint_score": 0,
+                "documentation_score": 0
+            },
             "validation_passed": False,
-            "lint_passed": False,
-            "owner": contact.get('email', contact.get('name', 'unknown')),
             "total_models": len(models),
             "total_fields": sum(len(model.get('fields', {})) for model in models.values()),
+            "empty_fields_count": 0,
             "has_examples": len(contract_dict.get('examples', [])) > 0,
             "error": error_message
         }
-
     def _is_validation_passed(self, validation_result) -> bool:
         """Simple check if validation passed."""
         if hasattr(validation_result, 'results') and validation_result.results:

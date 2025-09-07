@@ -119,14 +119,21 @@ class SchemaRepository:
             
             if columns:
                 table_name = table_full_name.split('.')[-1]
-                
                 fields = {}
                 for col in columns:
-                    fields[col['name']] = {
-                        'type': col['type'],
+                    field_def = {
+                        'type': col['type'],  # Keep exact Unity Catalog type
                         'required': False,
                         'description': col['comment']
                     }
+                    
+                    # Add items property for complex types (arrays, structs, maps)
+                    items_def = self._extract_items_definition(col['type'])
+                    if items_def:
+                        field_def['items'] = items_def
+                    
+                    fields[col['name']] = field_def
+                    
                 
                 models = {
                     table_name: {
@@ -215,3 +222,204 @@ class SchemaRepository:
             examples = []
         
         return examples
+    
+    def _extract_items_definition(self, databricks_type: str) -> Optional[Dict[str, Any]]:
+        """Extract items definition for complex types while preserving exact Unity Catalog types."""
+        if not databricks_type:
+            return None
+        
+        type_str = databricks_type.strip()
+        type_lower = type_str.lower()
+        
+        try:
+            # Handle array types: array<element_type>
+            if type_lower.startswith('array<'):
+                # Extract inner type from array<inner_type>
+                inner_start = type_str.find('<') + 1
+                inner_end = self._find_matching_bracket(type_str, inner_start - 1)
+                if inner_end > inner_start:
+                    inner_type = type_str[inner_start:inner_end].strip()
+                    
+                    items_def = {
+                        'type': inner_type  # Keep exact Unity Catalog type
+                    }
+                    
+                    # Recursively handle nested complex types
+                    nested_items = self._extract_items_definition(inner_type)
+                    if nested_items:
+                        items_def['items'] = nested_items
+                    
+                    return items_def
+            
+            # Handle struct types: struct<field1:type1,field2:type2,...>
+            elif type_lower.startswith('struct<'):
+                # Extract struct definition
+                inner_start = type_str.find('<') + 1
+                inner_end = self._find_matching_bracket(type_str, inner_start - 1)
+                if inner_end > inner_start:
+                    struct_def = type_str[inner_start:inner_end].strip()
+                    return self._parse_struct_definition(struct_def)
+            
+            # Handle map types: map<key_type,value_type>
+            elif type_lower.startswith('map<'):
+                # Extract map definition
+                inner_start = type_str.find('<') + 1
+                inner_end = self._find_matching_bracket(type_str, inner_start - 1)
+                if inner_end > inner_start:
+                    map_def = type_str[inner_start:inner_end].strip()
+                    return self._parse_map_definition(map_def)
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️ Failed to parse complex type {databricks_type}: {e}")
+        
+        return None
+    
+    def _find_matching_bracket(self, text: str, start_pos: int) -> int:
+        """Find the matching closing bracket for a given opening bracket position."""
+        if start_pos >= len(text) or text[start_pos] != '<':
+            return -1
+        
+        bracket_count = 1
+        pos = start_pos + 1
+        
+        while pos < len(text) and bracket_count > 0:
+            if text[pos] == '<':
+                bracket_count += 1
+            elif text[pos] == '>':
+                bracket_count -= 1
+            pos += 1
+        
+        return pos - 1 if bracket_count == 0 else -1
+    
+    def _parse_struct_definition(self, struct_def: str) -> Dict[str, Any]:
+        """Parse struct definition into items format with exact Unity Catalog types."""
+        try:
+            # For structs, we define the properties of the object
+            properties = {}
+            
+            # Split fields by comma, but be careful with nested structures
+            fields = self._split_struct_fields(struct_def)
+            
+            for field in fields:
+                if ':' in field:
+                    field_name, field_type = field.split(':', 1)
+                    field_name = field_name.strip()
+                    field_type = field_type.strip()
+                    
+                    prop_def = {
+                        'type': field_type  # Keep exact Unity Catalog type
+                    }
+                    
+                    # Handle nested complex types
+                    nested_items = self._extract_items_definition(field_type)
+                    if nested_items:
+                        prop_def['items'] = nested_items
+                    
+                    properties[field_name] = prop_def
+            
+            return {
+                'type': 'struct',  # Use 'struct' to indicate it's a struct type
+                'properties': properties
+            }
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️ Failed to parse struct definition {struct_def}: {e}")
+            return {'type': 'struct'}
+    
+    def _parse_map_definition(self, map_def: str) -> Dict[str, Any]:
+        """Parse map definition into items format with exact Unity Catalog types."""
+        try:
+            # Find the comma that separates key and value types, accounting for nested structures
+            comma_pos = self._find_map_separator(map_def)
+            if comma_pos > 0:
+                key_type = map_def[:comma_pos].strip()
+                value_type = map_def[comma_pos + 1:].strip()
+                
+                # For maps, we represent the structure
+                value_def = {
+                    'type': value_type  # Keep exact Unity Catalog type
+                }
+                
+                # Handle nested complex types in values
+                nested_items = self._extract_items_definition(value_type)
+                if nested_items:
+                    value_def['items'] = nested_items
+                
+                return {
+                    'type': 'map',  # Use 'map' to indicate it's a map type
+                    'keyType': key_type,  # Preserve exact key type
+                    'valueType': value_def  # Value type with potential nesting
+                }
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️ Failed to parse map definition {map_def}: {e}")
+        
+        return {'type': 'map'}
+    
+    def _find_map_separator(self, map_def: str) -> int:
+        """Find the comma that separates key and value types in a map definition."""
+        bracket_count = 0
+        for i, char in enumerate(map_def):
+            if char == '<':
+                bracket_count += 1
+            elif char == '>':
+                bracket_count -= 1
+            elif char == ',' and bracket_count == 0:
+                return i
+        return -1
+    
+    def _split_struct_fields(self, struct_def: str) -> List[str]:
+        """Split struct fields by comma, handling nested structures properly."""
+        fields = []
+        current_field = ""
+        bracket_count = 0
+        
+        for char in struct_def:
+            if char == '<':
+                bracket_count += 1
+            elif char == '>':
+                bracket_count -= 1
+            elif char == ',' and bracket_count == 0:
+                if current_field.strip():
+                    fields.append(current_field.strip())
+                current_field = ""
+                continue
+            
+            current_field += char
+        
+        # Add the last field
+        if current_field.strip():
+            fields.append(current_field.strip())
+        
+        return fields
+    
+    def _analyze_field_completeness(self, cursor, table_full_name: str, columns: List[Dict[str, str]]) -> Dict[str, float]:
+        """Analyze completeness for each field (optional - for better accuracy)."""
+        field_completeness = {}
+        
+        try:
+            # Sample 100 rows for quick analysis
+            sample_query = f"SELECT * FROM {table_full_name} LIMIT 100"
+            cursor.execute(sample_query)
+            sample_rows = cursor.fetchall()
+            
+            if sample_rows:
+                for idx, col in enumerate(columns):
+                    col_name = col['name']
+                    empty_count = 0
+                    
+                    for row in sample_rows:
+                        value = row[idx] if idx < len(row) else None
+                        # Check for null, empty string, or '0'
+                        if value is None or str(value).strip() == '' or str(value).strip() == '0':
+                            empty_count += 1
+                    
+                    completeness = ((len(sample_rows) - empty_count) / len(sample_rows)) * 100
+                    field_completeness[col_name] = completeness
+            
+            return field_completeness
+        
+        except Exception as e:
+            self.logger.warning(f"Could not analyze field completeness: {e}")
+            return {}
+        
