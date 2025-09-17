@@ -1,0 +1,7 @@
+domain,health_score_mean,health_score_min,health_score_max,health_score_std,health_score_count,validation_score_mean,completeness_score_mean,lint_score_mean,documentation_score_mean,validation_passed_<lambda>,total_fields_mean,empty_fields_count_mean,completeness_percentage_mean,has_examples_<lambda>,needs_urgent_attention_sum
+default,91.67,82.5,97.5,8.04,3,40.0,27.5,15.0,9.17,100.0,24.0,2.0,91.67,100.0,0
+projectconfig,77.67,76.4,78.3,0.98,6,40.0,22.67,15.0,0.0,100.0,22.67,5.33,75.66,100.0,0
+salesforce,76.82,69.3,85.0,5.04,8,40.0,21.82,15.0,0.0,100.0,31.5,9.38,72.76,100.0,0
+sap_bw,65.62,56.4,80.2,6.72,22,40.0,10.62,15.0,0.0,100.0,136.64,108.45,35.41,100.0,0
+towerdatahub,74.36,28.1,84.1,20.45,7,34.29,27.21,12.86,0.0,85.71,31.43,3.0,90.7,100.0,1
+towerselect,70.72,28.1,85.0,20.16,12,33.33,24.88,12.5,0.0,83.33,17.67,3.0,82.95,100.0,2

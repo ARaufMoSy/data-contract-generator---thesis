@@ -1,0 +1,18 @@
+{
+  "contract_id": "91b6feaa-9adb-4692-8ec1-a2a93e44208e",
+  "contract_schema": "salesforce",
+  "owner": "talal.chaudhry@siemensgamesa.com",
+  "validation_timestamp": "2025-09-04T23:49:38.620233",
+  "health_score": 83.1,
+  "health_score_calculation": {
+    "validation_score": 40,
+    "completeness_score": 28.1,
+    "lint_score": 15,
+    "documentation_score": 0.0
+  },
+  "validation_passed": true,
+  "total_models": 1,
+  "total_fields": 16,
+  "empty_fields_count": 1,
+  "has_examples": true
+}

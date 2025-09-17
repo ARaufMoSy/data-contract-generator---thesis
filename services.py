@@ -375,8 +375,18 @@ class FileService:
 class ValidationService:
     """Contract validation operations with business-focused health scoring."""
     
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None, use_databricks: bool = True):
         self.logger = logger or logging.getLogger(__name__)
+        self.use_databricks = use_databricks
+        self.databricks_service = None
+        
+        if self.use_databricks:
+            try:
+                from databricks_service import DatabricksService
+                self.databricks_service = DatabricksService(logger=self.logger)
+            except ImportError as e:
+                self.logger.warning(f"⚠️ Databricks service not available, falling back to JSON files: {e}")
+                self.use_databricks = False
     
     def validate_contract(self, contract_dict: Dict[str, Any], filepath: Path) -> Dict[str, Any]:
         """Validate contract with simplified KPI-focused results."""
@@ -411,24 +421,27 @@ class ValidationService:
             self.logger.error(f"❌ Validation failed: {e}")
             return self._build_error_kpi_results(contract_dict, str(e))
     
-    def save_validation_results(self, results: Dict[str, Any], contract_filepath: Path) -> Path:
-        """Save business-relevant validation results to JSON file."""
+    def save_validation_results(self, results: Dict[str, Any], contract_filepath: Path) -> bool:
+        """Save business-relevant validation results directly to Databricks table."""
         try:
-            # Generate results filename
-            contract_stem = contract_filepath.stem
-            results_filename = f"{contract_stem}_report.json"
-            results_filepath = contract_filepath.parent / results_filename
-            
-            # Save results with proper formatting
-            with open(results_filepath, 'w', encoding='utf-8') as file:
-                json.dump(results, file, indent=2, ensure_ascii=False)
-            
-            self.logger.info(f"✅ Health report saved to: {results_filepath}")
-            return results_filepath
+            # Write to Databricks table
+            if self.use_databricks and self.databricks_service:
+                success = self.databricks_service.write_validation_result_to_databricks(
+                    results, str(contract_filepath)
+                )
+                if success:
+                    self.logger.info(f"✅ Validation results written to Databricks table for {contract_filepath.name}")
+                    return True
+                else:
+                    self.logger.error(f"❌ Failed to write validation results to Databricks for {contract_filepath.name}")
+                    return False
+            else:
+                self.logger.error(f"❌ Databricks service not available for {contract_filepath.name}")
+                return False
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to save health report: {e}")
-            raise
+            self.logger.error(f"❌ Failed to save validation results to Databricks: {e}")
+            return False
     
     def _build_simple_kpi_results(self, contract_dict: Dict[str, Any], validation_result, lint_result) -> Dict[str, Any]:
         """Build simplified KPI-focused validation results with integrated health score."""

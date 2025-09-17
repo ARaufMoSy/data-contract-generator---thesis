@@ -1,0 +1,59 @@
+contract_name,domain,health_score,priority,issues,recommendations,validation_timestamp
+Catalogue_Towers_3X,towerdatahub,81.5,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-28 19:25:13.795479
+Catalogue_Towers_3X,towerdatahub,81.5,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-04 23:44:47.186931
+Catalogue_Towers_4X,towerdatahub,80.6,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-28 19:36:42.239656
+Catalogue_Towers_4X,towerdatahub,80.6,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-04 23:59:17.955353
+Catalogue_Towers_5X,towerdatahub,84.1,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:31:37.103273
+Catalogue_Towers_5X,towerdatahub,84.1,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:00:10.352064
+ProjectConfig_Config_Details,projectconfig,78.3,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-28 19:24:01.721620
+ProjectConfig_Config_Details,projectconfig,78.3,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-04 23:55:41.769273
+ProjectConfig_Config_Master,projectconfig,78.3,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-28 19:24:42.896067
+ProjectConfig_Config_Master,projectconfig,78.3,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-04 23:57:29.566850
+ProjectConfig_Feature_Details,projectconfig,76.4,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-28 19:23:27.768624
+ProjectConfig_Feature_Details,projectconfig,76.4,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-04 23:53:10.599606
+SST_Auto_Design_Time,towerselect,75.0,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:51:59.312893
+SST_Auto_Design_Time,towerselect,75.0,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:27:57.740967
+SST_Costing_Time,towerselect,85.0,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:52:44.625568
+SST_Costing_Time,towerselect,85.0,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:28:28.608423
+SST_Manual_Detailed_Time,towerselect,78.7,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:53:40.704448
+SST_Manual_Detailed_Time,towerselect,78.7,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:28:52.365984
+SST_Manual_Simplified_Time,towerselect,77.5,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:54:16.291545
+SST_Manual_Simplified_Time,towerselect,77.5,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:37:43.805625
+STP_Time,towerselect,80.0,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:54:52.233077
+STP_Time,towerselect,80.0,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:38:04.141563
+Salesforce_Opportunities,salesforce,75.4,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-28 19:22:45.954963
+Salesforce_Opportunities,salesforce,77.1,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-04 23:51:34.879455
+Salesforce_Proposals,salesforce,75.9,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-28 19:22:02.829163
+Salesforce_Proposals,salesforce,69.3,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-09-04 23:50:39.645378
+Salesforce_QuoteLines,salesforce,74.4,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:50:30.200596
+Salesforce_QuoteLines,salesforce,74.4,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:27:33.015213
+Salesforce_Quotes,salesforce,85.0,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-28 19:21:15.284523
+Salesforce_Quotes,salesforce,83.1,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-04 23:49:38.620233
+Site_Specific_Towers_SST,towerdatahub,28.1,Critical,Critical health score; Validation failed; Severely lacking documentation,Immediate review and remediation required; Fix validation errors; Add comprehensive documentation,2025-08-29 00:37:13.433263
+Site_Specific_Towers_SST,towerselect,28.1,Critical,Critical health score; Validation failed; Severely lacking documentation,Immediate review and remediation required; Fix validation errors; Add comprehensive documentation,2025-09-04 23:32:07.225607
+Site_Specific_Towers_SST,towerselect,28.1,Critical,Critical health score; Validation failed; Severely lacking documentation,Immediate review and remediation required; Fix validation errors; Add comprehensive documentation,2025-09-05 00:01:02.605958
+ZCV_DFP_CASH_MONITOR,sap_bw,80.2,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:47:46.952961
+ZCV_DFP_CASH_MONITOR,sap_bw,80.2,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:09:17.451628
+ZCV_DFP_FREEANALYSIS,sap_bw,74.4,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:49:13.020543
+ZCV_DFP_FREEANALYSIS,sap_bw,74.4,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:26:14.933622
+ZCV_DFP_FREE_CASHFLOW,sap_bw,56.4,High,Poor health score; Severely lacking documentation; Low field completeness,Schedule review within 1 week; Add comprehensive documentation; Complete missing field definitions,2025-08-29 00:48:31.933575
+ZCV_DFP_FREE_CASHFLOW,sap_bw,56.4,High,Poor health score; Severely lacking documentation; Low field completeness,Schedule review within 1 week; Add comprehensive documentation; Complete missing field definitions,2025-09-05 00:09:42.032861
+ZCV_GEP_CC_KS13,sap_bw,64.1,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-08-29 00:43:27.195178
+ZCV_GEP_CC_KS13,sap_bw,65.6,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-09-05 00:07:38.706092
+ZCV_GEP_PC_KE5X,sap_bw,63.7,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-08-29 00:40:58.576902
+ZCV_GEP_PC_KE5X,sap_bw,63.7,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-09-05 00:06:41.307646
+ZCV_GL_DFP_BLSHT_V001,sap_bw,62.6,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-08-29 00:46:15.755816
+ZCV_GL_DFP_BLSHT_V001,sap_bw,62.6,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-09-05 00:08:44.765014
+ZCV_GL_DFP_CASH_FLOW_V001,sap_bw,59.2,High,Poor health score; Severely lacking documentation; Low field completeness,Schedule review within 1 week; Add comprehensive documentation; Complete missing field definitions,2025-08-29 00:49:53.508220
+ZCV_GL_DFP_CASH_FLOW_V001,sap_bw,59.2,High,Poor health score; Severely lacking documentation; Low field completeness,Schedule review within 1 week; Add comprehensive documentation; Complete missing field definitions,2025-09-05 00:26:57.819828
+ZCV_GL_DFP_VOLIS_V001,sap_bw,62.7,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-08-29 00:39:20.227976
+ZCV_GL_DFP_VOLIS_V001,sap_bw,62.7,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-09-05 00:05:16.136413
+ZCV_PRCTR_GROUP,sap_bw,67.0,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-08-29 00:43:55.422401
+ZCV_PRCTR_GROUP,sap_bw,73.0,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 00:08:20.226621
+ZCV_SRP_CC_KS13,sap_bw,64.9,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-08-29 00:42:55.088528
+ZCV_SRP_CC_KS13,sap_bw,64.9,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-09-05 00:07:15.271695
+ZCV_SRP_PC_KE5X,sap_bw,62.9,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-08-29 00:40:10.648270
+ZCV_SRP_PC_KE5X,sap_bw,62.9,Medium,Severely lacking documentation; Low field completeness,Add comprehensive documentation; Complete missing field definitions,2025-09-05 00:06:14.852842
+datatypes_1,default,82.5,Medium,Severely lacking documentation,Add comprehensive documentation,2025-08-29 00:55:24.067691
+datatypes_1,default,95.0,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 16:18:30.395954
+datatypes_1,default,97.5,Medium,Severely lacking documentation,Add comprehensive documentation,2025-09-05 16:20:22.866046

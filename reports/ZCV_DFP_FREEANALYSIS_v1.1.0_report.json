@@ -1,0 +1,18 @@
+{
+  "contract_id": "c0c8cef8-318e-4126-af06-5dd5e79599ef",
+  "contract_schema": "sap_bw",
+  "owner": "steven.balding@siemensgamesa.com",
+  "validation_timestamp": "2025-09-05T00:26:14.933622",
+  "health_score": 74.4,
+  "health_score_calculation": {
+    "validation_score": 40,
+    "completeness_score": 19.4,
+    "lint_score": 15,
+    "documentation_score": 0.0
+  },
+  "validation_passed": true,
+  "total_models": 1,
+  "total_fields": 31,
+  "empty_fields_count": 11,
+  "has_examples": true
+}

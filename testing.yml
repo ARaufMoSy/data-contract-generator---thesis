@@ -1,0 +1,71 @@
+dataContractSpecification: 1.1.0
+id: my-data-contract-id
+info:
+  title: My Data Contract
+  version: 0.0.1
+models:
+  datatypes_1:
+    description: This table contains a variety of data types, including arrays, structs,
+      and primitive types. It is designed to accommodate complex data structures and    
+      can be used for scenarios such as data transformation, analysis of nested data,   
+      and handling diverse data inputs. Use cases may include processing uploaded       
+      files, analyzing user-generated content, or managing complex datasets that require
+      flexible data representation.
+    type: table
+    title: datatypes_1
+    fields:
+      array_boolean:
+        type: array
+        required: false
+        description: array boolean
+        items:
+          type: boolean
+          required: false
+      array_double:
+        type: array
+        required: false
+        description: double array
+        items:
+          type: double
+          required: false
+      array_int:
+        type: array
+        required: false
+        description: integer array
+        items:
+          type: long
+          required: false
+      array_nested:
+        type: array
+        required: false
+        description: nested array
+        items:
+          type: struct
+          required: false
+          fields:
+            id:
+              type: long
+              required: false
+            name:
+              type: string
+              required: false
+      timestamp_field:
+        type: timestamp
+        required: false
+        description: field for timestamp
+      timestamp_ntz_field:
+        type: timestamp
+        required: false
+        description: field for timestamp ntz
+      variant_field:
+        type: struct
+        required: false
+        description: field for variant
+        fields:
+          flexible_data:
+            type: struct
+            required: false
+            fields:
+              content:
+                type: string
+                required: false

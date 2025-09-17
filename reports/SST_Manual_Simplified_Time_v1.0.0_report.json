@@ -1,0 +1,18 @@
+{
+  "contract_id": "ec23d61d-a7d4-4866-a99c-edfc922fa18a",
+  "contract_schema": "towerselect",
+  "owner": "jasper.meyer@siemensgamesa.com",
+  "validation_timestamp": "2025-08-29T00:54:16.291545",
+  "health_score": 77.5,
+  "health_score_calculation": {
+    "validation_score": 40,
+    "completeness_score": 22.5,
+    "lint_score": 15,
+    "documentation_score": 0.0
+  },
+  "validation_passed": true,
+  "total_models": 1,
+  "total_fields": 16,
+  "empty_fields_count": 4,
+  "has_examples": true
+}

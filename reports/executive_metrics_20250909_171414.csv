@@ -1,0 +1,10 @@
+Metric,Value,Category,Status
+Overall Health Score,71.9,Overall,Good
+Validation Pass Rate,94.8%,Quality,Good
+Average Field Completeness,64.1%,Completeness,Needs Improvement
+Documentation Coverage,3.4%,Documentation,Needs Improvement
+Critical Contracts,3,Risk,Action Required
+Total Contracts Analyzed,28,Coverage,Info
+Total Domains,6,Coverage,Info
+Best Performing Domain,default,Performance,Good
+Worst Performing Domain,sap_bw,Performance,Needs Improvement

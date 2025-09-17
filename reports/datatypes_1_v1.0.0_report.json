@@ -1,0 +1,18 @@
+{
+  "contract_id": "098428ca-c9d2-4aa8-bc40-64f298998b14",
+  "contract_schema": "default",
+  "owner": "absy_admin@siemensgamesa.com",
+  "validation_timestamp": "2025-08-29T00:55:24.067691",
+  "health_score": 82.5,
+  "health_score_calculation": {
+    "validation_score": 40,
+    "completeness_score": 27.5,
+    "lint_score": 15,
+    "documentation_score": 0.0
+  },
+  "validation_passed": true,
+  "total_models": 1,
+  "total_fields": 24,
+  "empty_fields_count": 2,
+  "has_examples": true
+}

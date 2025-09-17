@@ -1,0 +1,18 @@
+{
+  "contract_id": "0fe89b61-0622-44a3-bd04-4bcf1e95f44f",
+  "contract_schema": "projectconfig",
+  "owner": "stefan.philipp@siemensgamesa.com",
+  "validation_timestamp": "2025-09-04T23:57:29.566850",
+  "health_score": 78.3,
+  "health_score_calculation": {
+    "validation_score": 40,
+    "completeness_score": 23.3,
+    "lint_score": 15,
+    "documentation_score": 0.0
+  },
+  "validation_passed": true,
+  "total_models": 1,
+  "total_fields": 27,
+  "empty_fields_count": 6,
+  "has_examples": true
+}

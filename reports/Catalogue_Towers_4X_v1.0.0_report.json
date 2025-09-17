@@ -1,0 +1,18 @@
+{
+  "contract_id": "e631378d-0849-4adc-8ec5-fd2484effd67",
+  "contract_schema": "towerdatahub",
+  "owner": "jasper.meyer@siemensgamesa.com",
+  "validation_timestamp": "2025-08-28T19:36:42.239656",
+  "health_score": 80.6,
+  "health_score_calculation": {
+    "validation_score": 40,
+    "completeness_score": 25.6,
+    "lint_score": 15,
+    "documentation_score": 0.0
+  },
+  "validation_passed": true,
+  "total_models": 1,
+  "total_fields": 34,
+  "empty_fields_count": 5,
+  "has_examples": true
+}

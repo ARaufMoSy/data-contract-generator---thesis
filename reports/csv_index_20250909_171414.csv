@@ -1,0 +1,7 @@
+File,Description,Records,Use Case
+data_quality_detailed_20250909_171414.csv,Complete detailed data for all contracts with all metrics and calculations,58,"Detailed analysis, custom visualizations, deep dives"
+domain_summary_20250909_171414.csv,Summary statistics aggregated by domain,6,"Domain comparison, portfolio analysis"
+contract_summary_20250909_171414.csv,Latest version summary for each unique contract,28,"Contract health overview, prioritization"
+time_series_analysis_20250909_171414.csv,Time series data for trend analysis (daily aggregation),17,"Trend analysis, forecasting, monitoring"
+issues_and_recommendations_20250909_171414.csv,Identified issues and recommended actions for each contract,58,"Action planning, remediation tracking"
+executive_metrics_20250909_171414.csv,Executive dashboard metrics and KPIs,9,"Executive reporting, KPI tracking"
